@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: energiflow_db
+    restart: always
+    environment:
+      POSTGRES_DB: energiflowdb
+      POSTGRES_USER: energiflow_user
+      POSTGRES_PASSWORD: energiflow_password # CHANGE THIS FOR PRODUCTION
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - energiflow_net
+
+  backend:
+    image: mindazub/energiflow-backend:v1.1.1
+    container_name: energiflow_backend
+    restart: always
+    ports:
+      - "8088:8088"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/energiflowdb
+      SPRING_DATASOURCE_USERNAME: energiflow_user
+      SPRING_DATASOURCE_PASSWORD: energiflow_password # MUST MATCH DB PASSWORD
+      JWT_SECRET: your_super_secret_jwt_key_change_me # CHANGE THIS FOR PRODUCTION
+    depends_on:
+      - db
+    networks:
+      - energiflow_net
+
+  frontend:
+    image: mindazub/energiflow-frontend:v1.1.1
+    container_name: energiflow_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://YOUR_SERVER_IP:8088
+    depends_on:
+      - backend
+    networks:
+      - energiflow_net
+
+networks:
+  energiflow_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
