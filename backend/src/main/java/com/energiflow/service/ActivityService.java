@@ -7,6 +7,8 @@ import com.energiflow.repository.ActivityLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,6 +31,11 @@ public class ActivityService {
         return repository.findAllByOrderByTimestampDesc().stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
+    }
+
+    public Page<ActivityLogResponse> getAllLogs(Pageable pageable) {
+        return repository.findAllByOrderByTimestampDesc(pageable)
+                .map(this::convertToResponse);
     }
 
     public List<ActivityLogResponse> getUserLogs(Long userId) {

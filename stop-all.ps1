@@ -23,7 +23,9 @@ else {
 
 # Stop Docker Compose
 Write-Host "Stopping PostgreSQL container..." -ForegroundColor Yellow
-docker-compose down
-Write-Host "✓ Stopped database container" -ForegroundColor Green
+if (Get-Command "docker-compose" -ErrorAction SilentlyContinue) {
+    docker-compose down
+    Write-Host "✓ Stopped database container" -ForegroundColor Green
+}
 
-Write-Host "`nAll services stopped!" -ForegroundColor Green
+Write-Host "All services stopped!" -ForegroundColor Green

@@ -21,6 +21,14 @@ interface ActivityLog {
     userEmail?: string;
 }
 
+interface PaginatedResponse<T> {
+    content: T[];
+    totalPages: number;
+    totalElements: number;
+    size: number;
+    number: number;
+}
+
 export default function AdminDashboard() {
     const router = useRouter();
     const [users, setUsers] = useState<User[]>([]);
@@ -28,6 +36,11 @@ export default function AdminDashboard() {
     const [tab, setTab] = useState<'users' | 'activities'>('users');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalActivities, setTotalActivities] = useState(0);
 
     useEffect(() => {
         const role = localStorage.getItem('role');
@@ -38,24 +51,43 @@ export default function AdminDashboard() {
             return;
         }
 
-        fetchData();
-    }, [router]);
+        // Fetch users at least once to get the count
+        if (users.length === 0) {
+            fetchUsers();
+        }
 
-    async function fetchData() {
+        if (tab === 'activities') {
+            fetchActivities();
+        } else {
+            fetchUsers();
+        }
+    }, [router, currentPage, tab]);
+
+    async function fetchUsers() {
+        const token = localStorage.getItem('token');
+        try {
+            const res = await apiClient.get('/api/admin/users', token || '');
+            if (res.ok) {
+                setUsers(await res.json());
+                if (tab === 'users') setLoading(false);
+            }
+        } catch (err) {
+            setError('Error connecting to the backend.');
+        }
+    }
+
+    async function fetchActivities() {
         setLoading(true);
         const token = localStorage.getItem('token');
-
         try {
-            const [usersRes, actsRes] = await Promise.all([
-                apiClient.get('/api/admin/users', token || ''),
-                apiClient.get('/api/admin/activities', token || '')
-            ]);
-
-            if (usersRes.ok && actsRes.ok) {
-                setUsers(await usersRes.json());
-                setActivities(await actsRes.json());
+            const res = await apiClient.get(`/api/admin/activities?page=${currentPage}&size=10`, token || '');
+            if (res.ok) {
+                const data: PaginatedResponse<ActivityLog> = await res.json();
+                setActivities(data.content);
+                setTotalPages(data.totalPages);
+                setTotalActivities(data.totalElements);
             } else {
-                setError('Failed to fetch data. Are you an admin?');
+                setError('Failed to fetch activity logs.');
             }
         } catch (err) {
             setError('Error connecting to the backend.');
@@ -64,7 +96,15 @@ export default function AdminDashboard() {
         }
     }
 
-    if (loading) return <div className="container" style={{ padding: '4rem', textAlign: 'center' }}>Loading Admin Panel...</div>;
+    if (loading && activities.length === 0 && users.length === 0) {
+        return (
+            <div className="container" style={{ padding: '8rem', textAlign: 'center' }}>
+                <div className="loading-spinner"></div>
+                <p style={{ marginTop: '1rem', color: 'var(--muted)' }}>Loading Admin Panel...</p>
+            </div>
+        );
+    }
+
     if (error) return <div className="container" style={{ padding: '4rem', textAlign: 'center', color: 'red' }}>{error}</div>;
 
     return (
@@ -73,7 +113,7 @@ export default function AdminDashboard() {
 
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)' }}>
                 <button
-                    onClick={() => setTab('users')}
+                    onClick={() => { setTab('users'); setCurrentPage(0); }}
                     style={{
                         padding: '1rem 2rem',
                         background: 'none',
@@ -81,13 +121,14 @@ export default function AdminDashboard() {
                         borderBottom: tab === 'users' ? '2px solid var(--primary)' : 'none',
                         color: tab === 'users' ? 'var(--primary)' : 'var(--muted)',
                         cursor: 'pointer',
-                        fontWeight: 600
+                        fontWeight: 600,
+                        transition: 'all 0.2s'
                     }}
                 >
                     Registered Users ({users.length})
                 </button>
                 <button
-                    onClick={() => setTab('activities')}
+                    onClick={() => { setTab('activities'); setCurrentPage(0); }}
                     style={{
                         padding: '1rem 2rem',
                         background: 'none',
@@ -95,10 +136,11 @@ export default function AdminDashboard() {
                         borderBottom: tab === 'activities' ? '2px solid var(--primary)' : 'none',
                         color: tab === 'activities' ? 'var(--primary)' : 'var(--muted)',
                         cursor: 'pointer',
-                        fontWeight: 600
+                        fontWeight: 600,
+                        transition: 'all 0.2s'
                     }}
                 >
-                    Activity Log ({activities.length})
+                    Activity Log ({totalActivities})
                 </button>
             </div>
 
@@ -138,41 +180,68 @@ export default function AdminDashboard() {
                     </table>
                 </div>
             ) : (
-                <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead style={{ background: 'var(--muted)', opacity: 0.1 }}>
-                            <tr>
-                                <th style={{ padding: '1rem', textAlign: 'left' }}>User</th>
-                                <th style={{ padding: '1rem', textAlign: 'left' }}>Action</th>
-                                <th style={{ padding: '1rem', textAlign: 'left' }}>Details</th>
-                                <th style={{ padding: '1rem', textAlign: 'left' }}>Time</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {activities.map(log => (
-                                <tr key={log.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                                    <td style={{ padding: '1rem' }}>{log.userName} <br /><small style={{ color: 'var(--muted)' }}>{log.userEmail}</small></td>
-                                    <td style={{ padding: '1rem' }}>
-                                        <span style={{
-                                            padding: '0.2rem 0.4rem',
-                                            borderRadius: '4px',
-                                            fontSize: '0.7rem',
-                                            fontWeight: 700,
-                                            background: 'var(--muted)',
-                                            color: 'var(--foreground)'
-                                        }}>
-                                            {log.action}
-                                        </span>
-                                    </td>
-                                    <td style={{ padding: '1rem' }}>{log.details}</td>
-                                    <td style={{ padding: '1rem', color: 'var(--muted)', fontSize: '0.85rem' }}>
-                                        {new Date(log.timestamp).toLocaleString()}
-                                    </td>
+                <>
+                    <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: '1.5rem', opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead style={{ background: 'var(--muted)', opacity: 0.1 }}>
+                                <tr>
+                                    <th style={{ padding: '1rem', textAlign: 'left' }}>User</th>
+                                    <th style={{ padding: '1rem', textAlign: 'left' }}>Action</th>
+                                    <th style={{ padding: '1rem', textAlign: 'left' }}>Details</th>
+                                    <th style={{ padding: '1rem', textAlign: 'left' }}>Time</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {activities.map(log => (
+                                    <tr key={log.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                                        <td style={{ padding: '1rem' }}>{log.userName} <br /><small style={{ color: 'var(--muted)' }}>{log.userEmail}</small></td>
+                                        <td style={{ padding: '1rem' }}>
+                                            <span style={{
+                                                padding: '0.2rem 0.4rem',
+                                                borderRadius: '4px',
+                                                fontSize: '0.7rem',
+                                                fontWeight: 700,
+                                                background: 'var(--muted)',
+                                                color: 'var(--foreground)'
+                                            }}>
+                                                {log.action}
+                                            </span>
+                                        </td>
+                                        <td style={{ padding: '1rem' }}>{log.details}</td>
+                                        <td style={{ padding: '1rem', color: 'var(--muted)', fontSize: '0.85rem' }}>
+                                            {new Date(log.timestamp).toLocaleString()}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '2rem' }}>
+                            <button
+                                disabled={currentPage === 0 || loading}
+                                onClick={() => { setCurrentPage(prev => prev - 1); window.scrollTo(0, 0); }}
+                                className="btn btn-outline"
+                                style={{ padding: '0.5rem 1.5rem', opacity: currentPage === 0 ? 0.5 : 1 }}
+                            >
+                                Previous
+                            </button>
+                            <div style={{ fontWeight: 600, color: 'var(--muted)' }}>
+                                Page {currentPage + 1} <span style={{ fontWeight: 400, opacity: 0.5 }}>of</span> {totalPages}
+                            </div>
+                            <button
+                                disabled={currentPage === totalPages - 1 || loading}
+                                onClick={() => { setCurrentPage(prev => prev + 1); window.scrollTo(0, 0); }}
+                                className="btn btn-primary"
+                                style={{ padding: '0.5rem 1.5rem', opacity: currentPage === totalPages - 1 ? 0.5 : 1 }}
+                            >
+                                Next
+                            </button>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );
