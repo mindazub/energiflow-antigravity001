@@ -145,76 +145,80 @@ export default function AdminDashboard() {
             </div>
 
             {tab === 'users' ? (
-                <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead style={{ background: 'var(--muted)', opacity: 0.1 }}>
-                            <tr>
-                                <th style={{ padding: '1rem', textAlign: 'left' }}>Name</th>
-                                <th style={{ padding: '1rem', textAlign: 'left' }}>Email</th>
-                                <th style={{ padding: '1rem', textAlign: 'left' }}>Role</th>
-                                <th style={{ padding: '1rem', textAlign: 'left' }}>Joined At</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.map(user => (
-                                <tr key={user.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                                    <td style={{ padding: '1rem' }}>{user.name}</td>
-                                    <td style={{ padding: '1rem' }}>{user.email}</td>
-                                    <td style={{ padding: '1rem' }}>
-                                        <span style={{
-                                            padding: '0.25rem 0.5rem',
-                                            borderRadius: '4px',
-                                            fontSize: '0.75rem',
-                                            background: user.role === 'ADMIN' ? 'rgba(52, 211, 153, 0.1)' : 'rgba(96, 165, 250, 0.1)',
-                                            color: user.role === 'ADMIN' ? '#10b981' : '#3b82f6'
-                                        }}>
-                                            {user.role}
-                                        </span>
-                                    </td>
-                                    <td style={{ padding: '1rem', color: 'var(--muted)' }}>
-                                        {new Date(user.createdAt).toLocaleDateString()}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            ) : (
-                <>
-                    <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: '1.5rem', opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div className="card" style={{ padding: 0, overflow: 'hidden', width: '100%' }}>
+                    <div className="table-container">
+                        <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                             <thead style={{ background: 'var(--muted)', opacity: 0.1 }}>
                                 <tr>
-                                    <th style={{ padding: '1rem', textAlign: 'left' }}>User</th>
-                                    <th style={{ padding: '1rem', textAlign: 'left' }}>Action</th>
-                                    <th style={{ padding: '1rem', textAlign: 'left' }}>Details</th>
-                                    <th style={{ padding: '1rem', textAlign: 'left' }}>Time</th>
+                                    <th style={{ padding: '1.25rem 1rem', textAlign: 'left', width: '25%' }}>Name</th>
+                                    <th style={{ padding: '1.25rem 1rem', textAlign: 'left' }}>Email</th>
+                                    <th style={{ padding: '1.25rem 1rem', textAlign: 'left', width: '150px' }}>Role</th>
+                                    <th style={{ padding: '1.25rem 1rem', textAlign: 'left', width: '200px' }}>Joined At</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {activities.map(log => (
-                                    <tr key={log.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                                        <td style={{ padding: '1rem' }}>{log.userName} <br /><small style={{ color: 'var(--muted)' }}>{log.userEmail}</small></td>
+                                {users.map(user => (
+                                    <tr key={user.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                                        <td style={{ padding: '1rem' }}>{user.name}</td>
+                                        <td style={{ padding: '1rem' }}>{user.email}</td>
                                         <td style={{ padding: '1rem' }}>
                                             <span style={{
-                                                padding: '0.2rem 0.4rem',
+                                                padding: '0.25rem 0.5rem',
                                                 borderRadius: '4px',
-                                                fontSize: '0.7rem',
-                                                fontWeight: 700,
-                                                background: 'var(--muted)',
-                                                color: 'var(--foreground)'
+                                                fontSize: '0.75rem',
+                                                background: user.role === 'ADMIN' ? 'rgba(52, 211, 153, 0.1)' : 'rgba(96, 165, 250, 0.1)',
+                                                color: user.role === 'ADMIN' ? '#10b981' : '#3b82f6'
                                             }}>
-                                                {log.action}
+                                                {user.role}
                                             </span>
                                         </td>
-                                        <td style={{ padding: '1rem' }}>{log.details}</td>
-                                        <td style={{ padding: '1rem', color: 'var(--muted)', fontSize: '0.85rem' }}>
-                                            {new Date(log.timestamp).toLocaleString()}
+                                        <td style={{ padding: '1rem', color: 'var(--muted)' }}>
+                                            {new Date(user.createdAt).toLocaleDateString()}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            ) : (
+                <>
+                    <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: '1.5rem', opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s', width: '100%' }}>
+                        <div className="table-container">
+                            <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+                                <thead style={{ background: 'var(--muted)', opacity: 0.1 }}>
+                                    <tr>
+                                        <th style={{ padding: '1.25rem 1rem', textAlign: 'left', width: '25%' }}>User</th>
+                                        <th style={{ padding: '1.25rem 1rem', textAlign: 'left', width: '150px' }}>Action</th>
+                                        <th style={{ padding: '1.25rem 1rem', textAlign: 'left' }}>Details</th>
+                                        <th style={{ padding: '1.25rem 1rem', textAlign: 'left', width: '200px' }}>Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {activities.map(log => (
+                                        <tr key={log.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                                            <td style={{ padding: '1rem' }}>{log.userName} <br /><small style={{ color: 'var(--muted)' }}>{log.userEmail}</small></td>
+                                            <td style={{ padding: '1rem' }}>
+                                                <span style={{
+                                                    padding: '0.2rem 0.4rem',
+                                                    borderRadius: '4px',
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: 700,
+                                                    background: 'var(--muted)',
+                                                    color: 'var(--foreground)'
+                                                }}>
+                                                    {log.action}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: '1rem' }}>{log.details}</td>
+                                            <td style={{ padding: '1rem', color: 'var(--muted)', fontSize: '0.85rem' }}>
+                                                {new Date(log.timestamp).toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     {/* Pagination Controls */}

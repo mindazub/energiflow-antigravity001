@@ -54,7 +54,9 @@ export default function RootLayout({
             </div>
           </nav>
           <main style={{ paddingTop: '80px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            {children}
+            <div style={{ flex: 1 }}>
+              {children}
+            </div>
             <Footer />
           </main>
         </ThemeProvider>

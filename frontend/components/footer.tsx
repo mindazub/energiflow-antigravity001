@@ -4,7 +4,6 @@ export function Footer() {
             borderTop: '1px solid var(--border)',
             background: 'var(--card-bg)',
             padding: '4rem 0 3rem 0',
-            marginTop: '8rem', // Added more space before footer
             backdropFilter: 'blur(12px)'
         }}>
             <div className="container">
